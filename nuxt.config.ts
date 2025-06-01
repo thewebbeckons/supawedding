@@ -5,6 +5,16 @@ export default defineNuxtConfig({
   future: {
     compatibilityVersion: 4,
   },
-  modules: ["@nuxt/ui"],
+  ui: {
+    colorMode: false,
+  },
+  modules: ["@nuxt/ui", "@nuxtjs/supabase"],
   css: ["~/assets/css/main.css"],
+  supabase: {
+    redirectOptions: {
+      login: "/",
+      callback: "/callback",
+      exclude: ["/", "/login", "/register", "/forgot-password"],
+    },
+  },
 });
