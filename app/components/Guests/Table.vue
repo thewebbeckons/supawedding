@@ -1,20 +1,33 @@
 <script setup lang="ts">
+import type { DropdownMenuItem } from '@nuxt/ui'
 const props = defineProps<{
     guests: Array<{ id: string; name: string; table: string }>;
 }>();
+const supabase = useSupabaseClient()
+const toast = useToast()
 
-const emit = defineEmits<{
-    edit: [guest: { id: string; name: string; table: string }]
-    delete: [id: string]
-}>();
+const getDropdownItems = (guest: { id: string; name: string; table: string }) => [
+    [
+        {
+            label: 'Edit',
+            icon: 'i-heroicons-pencil',
+            onSelect() {
 
-const editGuest = (guest: { id: string; name: string; table: string }) => {
-    emit('edit', guest);
-};
+            }
+        },
+        {
+            label: 'Delete',
+            icon: 'i-heroicons-trash',
+            color: 'error',
+            onSelect() {
+                emit('delete', guest.id);
+                console.log('Delete guest with ID:', guest.id);
+            }
+        }
+    ]
+]
+const emit = defineEmits(['delete', 'edit'])
 
-const deleteGuest = (id: string) => {
-    emit('delete', id);
-};
 </script>
 
 <template>
@@ -26,25 +39,19 @@ const deleteGuest = (id: string) => {
         </div>
     </div>
     <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        <div v-for="guest in guests" :key="guest.id">
+        <div v-for="guest in guests" :key="guest.id" :content="{
+            align: 'start',
+            side: 'bottom'
+        }">
             <UCard class="relative group">
-                <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <UDropdown :items="[
-                        [
-                            {
-                                label: 'Edit',
-                                icon: 'i-heroicons-pencil',
-                                click: () => editGuest(guest)
-                            },
-                            {
-                                label: 'Delete',
-                                icon: 'i-heroicons-trash',
-                                click: () => deleteGuest(guest.id)
-                            }
-                        ]
-                    ]">
-                        <UButton icon="i-heroicons-ellipsis-vertical" size="sm" color="gray" variant="ghost" />
-                    </UDropdown>
+                <div class="absolute top-2 right-2 ">
+                    <UDropdownMenu :items="getDropdownItems(guest)" :content="{
+                        align: 'start',
+                        side: 'bottom',
+                        sideOffset: 8
+                    }" class="cursor-pointer">
+                        <UButton icon="i-lucide-menu" color="neutral" variant="ghost" />
+                    </UDropdownMenu>
                 </div>
                 <h3 class="text-xl font-semibold">{{ guest.name }}</h3>
                 <p>{{ guest.table }}</p>

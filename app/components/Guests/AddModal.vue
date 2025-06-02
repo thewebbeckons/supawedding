@@ -10,8 +10,7 @@ const tables = ref([
     { name: 'Table 2', id: 'table2' },
     { name: 'Table 3', id: 'table3' },
 ])
-
-console.log(user.value)
+const emit = defineEmits(['add'])
 const schema = z.object({
     name: z.string().min(1, 'Name is required'),
     table: z.object({
@@ -48,13 +47,7 @@ async function addGuest(event: FormSubmitEvent<Schema>) {
         if (error) {
             throw error
         }
-        toast.add({
-            title: 'Guest Added',
-            description: `Successfully added ${name} to the guest list.`,
-            variant: 'success',
-            duration: 3000,
-        })
-
+        emit('add') // Emit the new guest data
     } catch (error) {
         toast.add({
             title: 'Error',
@@ -78,7 +71,7 @@ function onCreateTable(name: string) {
 }
 </script>
 <template>
-    <UButton icon="i-lucide-plus" color="primary" variant="solid" @click="open = true">
+    <UButton icon="i-lucide-plus" color="primary" variant="solid" @click="open = true" class="cursor-pointer">
         Add Guest
     </UButton>
     <UModal v-model:open="open">

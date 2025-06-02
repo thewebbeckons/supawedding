@@ -5,7 +5,7 @@ const toast = useToast()
 
 const eventDate = ref(new Date().toISOString().split('T')[0])
 
-const { data: guests } = await useAsyncData('guests', async () => {
+const { data: guests, refresh } = await useAsyncData('guests', async () => {
     try {
         const { data, error } = await supabase
             .from('guests')
@@ -13,7 +13,7 @@ const { data: guests } = await useAsyncData('guests', async () => {
             .eq('user_id', user.value?.id)
 
         if (error) throw error
-        return data
+        return data || []
     } catch (error) {
         console.error('Error fetching guests:', error)
         toast.add({
@@ -22,15 +22,51 @@ const { data: guests } = await useAsyncData('guests', async () => {
             variant: 'danger',
             duration: 3000,
         })
+        return []
     }
-
 })
 
+const deleteGuest = async (id) => {
+    console.log('What is the ID:', id)
+    try {
+        const { error } = await supabase
+            .from('guests')
+            .delete()
+            .eq('id', id)
 
+        if (error) throw error
 
+        toast.add({
+            title: 'Guest deleted',
+            description: 'Guest has been successfully removed from the list.',
+            variant: 'success',
+            duration: 2000
+        })
+
+        // Refresh the guest list
+        await refresh()
+    } catch (error) {
+        console.error('Error deleting guest:', error)
+        toast.add({
+            title: 'Error',
+            description: 'Failed to delete guest. Please try again.',
+            variant: 'danger',
+            duration: 3000
+        })
+    }
+}
+const editGuest = (id: string) => {
+    // Logic to edit guest
+    console.log('Edit guest with ID:', id)
+}
 const importCsv = () => {
-    // TODO: Implement CSV import functionality
-    console.log('Import CSV clicked')
+    // Logic to import CSV
+    toast.add({
+        title: 'Import CSV',
+        description: 'CSV import functionality is not yet implemented.',
+        variant: 'info',
+        duration: 3000,
+    })
 }
 </script>
 
@@ -50,13 +86,13 @@ const importCsv = () => {
                     Guest List
                 </h2>
                 <div class="flex gap-3">
-                    <GuestsAddModal />
+                    <GuestsAddModal @add="() => refresh()" />
                     <UButton icon="i-lucide-sheet" @click="importCsv" color="neutral" variant="outline">
                         Import CSV
                     </UButton>
                 </div>
             </div>
-            <GuestsTable :guests="guests" />
+            <GuestsTable :guests="guests || []" @delete="deleteGuest" @edit="editGuest" />
         </div>
     </UContainer>
 </template>
