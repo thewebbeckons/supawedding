@@ -5,11 +5,7 @@ const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const toast = useToast()
 const open = ref(false)
-const tables = ref([
-    { name: 'Table 1', id: 'table1' },
-    { name: 'Table 2', id: 'table2' },
-    { name: 'Table 3', id: 'table3' },
-])
+
 const emit = defineEmits(['add'])
 const schema = z.object({
     name: z.string().min(1, 'Name is required'),
@@ -32,7 +28,7 @@ async function addGuest(event: FormSubmitEvent<Schema>) {
         toast.add({
             title: 'Not Authenticated',
             description: 'You must be logged in to add guests.',
-            variant: 'warning',
+            color: 'warning',
             duration: 3000,
         })
         return
@@ -52,7 +48,7 @@ async function addGuest(event: FormSubmitEvent<Schema>) {
         toast.add({
             title: 'Error',
             description: 'Failed to add guest. Please try again.',
-            variant: 'danger',
+            color: 'error',
             duration: 3000,
         })
         console.error('Error adding guest:', error)
@@ -71,7 +67,7 @@ function onCreateTable(name: string) {
 }
 </script>
 <template>
-    <UButton icon="i-lucide-plus" color="primary" variant="solid" @click="open = true" class="cursor-pointer">
+    <UButton icon="i-lucide-plus" color="primary" variant="soft" @click="open = true" class="cursor-pointer">
         Add Guest
     </UButton>
     <UModal v-model:open="open">

@@ -13,7 +13,7 @@ Users can create guests, tables and assign guests to tables. The application wil
 - Use destructuring for objects and arrays.
 - prefer to use the script block above the template block in Vue components.
 
-# Use Nuxt UI v3 Pro
+# Use Nuxt UI v3
 
 - The application uses Nuxt UI v3, which is a UI library for Nuxt 3 applications.
 - do not use any other UI libraries or frameworks.

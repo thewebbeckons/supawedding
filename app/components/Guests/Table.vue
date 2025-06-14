@@ -1,61 +1,177 @@
 <script setup lang="ts">
-import type { DropdownMenuItem } from '@nuxt/ui'
-const props = defineProps<{
-    guests: Array<{ id: string; name: string; table: string }>;
-}>();
-const supabase = useSupabaseClient()
+import { h, resolveComponent } from 'vue'
+import type { TableColumn } from '@nuxt/ui'
+import type { Row } from '@tanstack/vue-table'
+
+const UButton = resolveComponent('UButton')
+const UBadge = resolveComponent('UBadge')
+const UDropdownMenu = resolveComponent('UDropdownMenu')
+
 const toast = useToast()
 
-const getDropdownItems = (guest: { id: string; name: string; table: string }) => [
-    [
-        {
-            label: 'Edit',
-            icon: 'i-heroicons-pencil',
-            onSelect() {
+type Guest = {
+    id: string
+    name: string
+}
 
+type Payment = {
+    id: string
+    date: string
+    status: 'paid' | 'failed' | 'refunded'
+    email: string
+    amount: number
+}
+
+const data = ref<Payment[]>([
+    {
+        id: '4600',
+        date: '2024-03-11T15:30:00',
+        status: 'paid',
+        email: 'james.anderson@example.com',
+        amount: 594
+    },
+    {
+        id: '4599',
+        date: '2024-03-11T10:10:00',
+        status: 'failed',
+        email: 'mia.white@example.com',
+        amount: 276
+    },
+    {
+        id: '4598',
+        date: '2024-03-11T08:50:00',
+        status: 'refunded',
+        email: 'william.brown@example.com',
+        amount: 315
+    },
+    {
+        id: '4597',
+        date: '2024-03-10T19:45:00',
+        status: 'paid',
+        email: 'emma.davis@example.com',
+        amount: 529
+    },
+    {
+        id: '4596',
+        date: '2024-03-10T15:55:00',
+        status: 'paid',
+        email: 'ethan.harris@example.com',
+        amount: 639
+    }
+])
+
+const columns: TableColumn<Payment>[] = [
+    {
+        accessorKey: 'id',
+        header: '#',
+        cell: ({ row }) => `#${row.getValue('id')}`
+    },
+    {
+        accessorKey: 'date',
+        header: 'Date',
+        cell: ({ row }) => {
+            return new Date(row.getValue('date')).toLocaleString('en-US', {
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            })
+        }
+    },
+    {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => {
+            const color = {
+                paid: 'success' as const,
+                failed: 'error' as const,
+                refunded: 'neutral' as const
+            }[row.getValue('status') as string]
+
+            return h(UBadge, { class: 'capitalize', variant: 'subtle', color }, () =>
+                row.getValue('status')
+            )
+        }
+    },
+    {
+        accessorKey: 'email',
+        header: 'Email'
+    },
+    {
+        accessorKey: 'amount',
+        header: () => h('div', { class: 'text-right' }, 'Amount'),
+        cell: ({ row }) => {
+            const amount = Number.parseFloat(row.getValue('amount'))
+
+            const formatted = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'EUR'
+            }).format(amount)
+
+            return h('div', { class: 'text-right font-medium' }, formatted)
+        }
+    },
+    {
+        id: 'actions',
+        cell: ({ row }) => {
+            return h(
+                'div',
+                { class: 'text-right' },
+                h(
+                    UDropdownMenu,
+                    {
+                        content: {
+                            align: 'end'
+                        },
+                        items: getRowItems(row),
+                        'aria-label': 'Actions dropdown'
+                    },
+                    () =>
+                        h(UButton, {
+                            icon: 'i-lucide-ellipsis-vertical',
+                            color: 'neutral',
+                            variant: 'ghost',
+                            class: 'ml-auto',
+                            'aria-label': 'Actions dropdown'
+                        })
+                )
+            )
+        }
+    }
+]
+
+function getRowItems(row: Row<Payment>) {
+    return [
+        {
+            type: 'label',
+            label: 'Actions'
+        },
+        {
+            label: 'Copy payment ID',
+            onSelect() {
+                navigator.clipboard.writeText(row.original.id)
+
+                toast.add({
+                    title: 'Payment ID copied to clipboard!',
+                    color: 'success',
+                    icon: 'i-lucide-circle-check'
+                })
             }
         },
         {
-            label: 'Delete',
-            icon: 'i-heroicons-trash',
-            color: 'error',
-            onSelect() {
-                emit('delete', guest.id);
-                console.log('Delete guest with ID:', guest.id);
-            }
+            type: 'separator'
+        },
+        {
+            label: 'View customer'
+        },
+        {
+            label: 'View payment details'
         }
     ]
-]
-const emit = defineEmits(['delete', 'edit'])
-
+}
 </script>
 
 <template>
-    <div v-if="guests.length === 0">
-        <div
-            class="outline-2 outline-offset-2 outline-dashed py-24 rounded-lg flex flex-col items-center justify-center text-gray-500 ">
-            <UIcon name="i-heroicons-user-group" class="w-8 h-8 mb-2" />
-            <p>No guests added yet. Click "Add Guest" to start.</p>
-        </div>
-    </div>
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        <div v-for="guest in guests" :key="guest.id" :content="{
-            align: 'start',
-            side: 'bottom'
-        }">
-            <UCard class="relative group">
-                <div class="absolute top-2 right-2 ">
-                    <UDropdownMenu :items="getDropdownItems(guest)" :content="{
-                        align: 'start',
-                        side: 'bottom',
-                        sideOffset: 8
-                    }" class="cursor-pointer">
-                        <UButton icon="i-lucide-menu" color="neutral" variant="ghost" />
-                    </UDropdownMenu>
-                </div>
-                <h3 class="text-xl font-semibold">{{ guest.name }}</h3>
-                <p>{{ guest.table }}</p>
-            </UCard>
-        </div>
-    </div>
+    <UTable :data="data" :columns="columns" class="flex-1" />
 </template>
